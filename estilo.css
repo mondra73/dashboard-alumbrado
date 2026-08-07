@@ -206,3 +206,40 @@ tfoot td{background:var(--panel-2);border-top:1px solid var(--line);color:#fff;f
     .hide-sm{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ========== MOBILE ========== */
+@media (max-width: 768px) {
+    .wrap { padding: 16px 12px 24px; }
+    
+    .top { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .top-right { width: 100%; align-items: flex-start; }
+    #tipos { flex-wrap: wrap; }
+    #tipos .mode { font-size: 10px; padding: 6px 10px; }
+    
+    .tabs { flex-wrap: wrap; }
+    .tab { font-size: 10px; padding: 7px 12px; }
+    
+    .ctlrow { flex-wrap: wrap; }
+    .modes { flex-wrap: wrap; }
+    .mode { font-size: 10px; padding: 6px 12px; }
+    
+    .hero { grid-template-columns: 1fr; gap: 20px; padding-top: 16px; }
+    .total-num { font-size: 64px; }
+    
+    .cards { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .card-n { font-size: 32px; }
+    
+    .controls { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .opts { flex-direction: column; align-items: flex-start; gap: 10px; }
+    
+    .maprow { grid-template-columns: 1fr; margin-left: -12px; width: calc(100% + 24px); }
+    .wrapmap { height: 50vh; min-height: 300px; }
+    .side { max-height: 40vh; }
+    
+    .hide-sm { display: none; }
+    th, td { font-size: 10px; padding: 8px 6px; }
+    
+    .bar.tall { height: 50px; }
+    .tall .seg-txt { font-size: 9px; left: 6px; top: 6px; }
+    .tall .seg-pct { font-size: 16px; left: 6px; bottom: 8px; }
+}
