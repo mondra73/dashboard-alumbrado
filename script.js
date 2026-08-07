@@ -57,6 +57,8 @@ const colorOf = i => mode==="bin"?BINS[grp(i)].col:TECS[tec[i]].col;
 const visible = i => on[tec[i]];
 
 /* ---------- Carga de datos desde GitHub ---------- */
+let tipoSeleccionado = "Lámpara";
+
 async function cargarDatos() {
   document.getElementById("src").textContent = "Descargando datos...";
   try {
@@ -74,14 +76,13 @@ async function cargarDatos() {
 
 function procesarJSON(json) {
   const datos = json.datos;
-  document.getElementById("src").textContent = 
-    "Actualizado: "+new Date(json.actualizado).toLocaleString("es-AR")+" · "+nf.format(json.total)+" registros";
-  
-  // Construir índices de clasificaciones, calles, tipos
   const cMap = new Map(), sMap = new Map(), tMap = new Map(), ySet = new Set();
   const regs = [];
   
   datos.forEach(d => {
+    const tipoEquip = (d["Tipo"] || "").trim();
+    if (tipoSeleccionado !== "todas" && tipoEquip !== tipoSeleccionado) return;
+    
     const cla = d["Clasificación"] || "", cal = d["Ubicación: Calle"] || "(sin calle)";
     const tip = d["Tipo de ubicación"] || "(sin dato)";
     const x = parseFloat(d["Ubicación: Coordenada X"]), y = parseFloat(d["Ubicación: Coordenada Y"]);
@@ -103,12 +104,28 @@ function procesarJSON(json) {
     regs.push([la,lo,cMap.get(cla),sMap.get(cal),parseInt(d["Ubicación: Altura"])||0,tMap.get(tip),ano,zonaVal]);
   });
   
+  document.getElementById("src").textContent = 
+    "Actualizado: "+new Date(json.actualizado).toLocaleString("es-AR")+" · "+nf.format(json.total)+" registros"+
+    (tipoSeleccionado!=="todas"?" · "+nf.format(regs.length)+" "+tipoSeleccionado.toLowerCase()+"s":"");
+  
   clases = [...cMap.keys()]; calles = [...sMap.keys()]; tipos = [...tMap.keys()];
   anios = [...ySet].sort((a,b)=>a-b);
   const aIdx = new Map(anios.map((a,i)=>[a,i]));
   regs.forEach(r => r[6] = aIdx.get(r[6])||0);
   
   setDatos(regs);
+}
+
+function cambiarTipo(tipo) {
+  tipoSeleccionado = tipo;
+  fetch(DATA_URL)
+    .then(r => r.arrayBuffer())
+    .then(buffer => new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip")))
+    .then(stream => new Response(stream).text())
+    .then(texto => {
+      procesarJSON(JSON.parse(texto));
+      if(mapReady){ renderLegend(); renderSide(); renderSearch(); redraw(); }
+    });
 }
 
 function setDatos(regs) {
@@ -130,7 +147,6 @@ function setDatos(regs) {
   renderZonas();renderResumen();
 }
 
-/* ---------- Gauss-Krüger faja 5 (POSGAR) → lat/lon ---------- */
 function gkInv(E,Nn){
   const a=6378137,f=1/298.257222101,e2=f*(2-f),ep2=e2/(1-e2);
   const arc=phi=>a*((1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)*phi-(3*e2/8+3*e2*e2/32+45*e2*e2*e2/1024)*Math.sin(2*phi)+(15*e2*e2/256+45*e2*e2*e2/1024)*Math.sin(4*phi)-(35*e2*e2*e2/3072)*Math.sin(6*phi));
@@ -144,12 +160,10 @@ function gkInv(E,Nn){
   return [la*180/Math.PI,lo*180/Math.PI];
 }
 
-/* ---------- Índices ---------- */
 function index(){
   NZ=0;clsCount=new Array(clases.length).fill(0);
   for(let i=0;i<N;i++){if(!inZ(i))continue;clsCount[cls[i]]++;NZ++;}
   data=clases.map((c,i)=>({clase:c,n:clsCount[i],tec:clsTec[i],w:clsW[i]})).filter(d=>d.n>0).sort((a,b)=>b.n-a.n);
-  
   streets=calles.map((nm,i)=>({i,nm,led:0,old:0,tot:0,la0:90,la1:-90,lo0:180,lo1:-180}));
   barrios=BARRIOS.map((b,i)=>({i,nm:b[0],la:b[1],lo:b[2],tot:0,led:0,old:0,la0:90,la1:-90,lo0:180,lo1:-180,st:{}}));
   const kx=Math.cos(-32.91*Math.PI/180);
@@ -168,7 +182,6 @@ function index(){
   barrios.forEach(B=>{B.top=Object.entries(B.st).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>calles[k]+" ("+nf.format(v)+")");});
 }
 
-/* ---------- PESTAÑA RESUMEN ---------- */
 const oldKeys=()=>joinMhx?["SOD","MER","OTR"]:["SOD","MHX","MER","OTR"];
 const detailKeys=()=>["LED",...oldKeys()];
 const TECMAP={LED:TECS[0],SOD:TECS[1],MHX:TECS[2],MER:TECS[3],OTR:TECS[4],OLD:{label:"Tecnología anterior",col:"#FFA94D"}};
@@ -203,10 +216,8 @@ function renderResumen(){
   const gs=groups(),total=data.reduce((a,b)=>a+b.n,0),bin=binGroups();
   const ledG=bin.find(g=>g.k==="LED")||{n:0,kw:0},oldG=bin.find(g=>g.k==="OLD")||{n:0,kw:0,rows:[]};
   const oldDetail=build(oldKeys(),r=>(joinMhx&&r.tec===2)?"MER":keyOf(r.tec));
-  
   document.getElementById("total").textContent=nf.format(total);
   document.getElementById("totalSub").textContent="Recambio a LED "+pf(ledG.n/total*100)+" % · faltan "+nf.format(oldG.n);
-  
   const bars=document.getElementById("bars");bars.innerHTML="";
   if(mode==="bin"){
     drawBar(bars,bin,total,"tall",true,"LED frente a tecnologías anteriores",nf.format(total)+" unidades = 100 %");
@@ -215,7 +226,6 @@ function renderResumen(){
     drawBar(bars,gs,total,"tall",false,"Composición por tecnología",nf.format(total)+" unidades = 100 %");
     drawBar(bars,bin,total,"short",true,"LED frente a tecnologías anteriores",nf.format(total)+" unidades = 100 %");
   }
-  
   document.getElementById("cardsTitle").textContent=mode==="bin"?"Los dos grupos, y adentro cada tecnología anterior":"Cada tecnología por separado";
   const cards=document.getElementById("cards");cards.innerHTML="";
   const list=mode==="bin"?[...bin.map(g=>({g,sub:false})),...oldDetail.map(g=>({g,sub:true}))]:gs.map(g=>({g,sub:false}));
@@ -225,7 +235,6 @@ function renderResumen(){
     el.innerHTML='<div class="card-name"><i class="dot"></i>'+g.label+'</div><div><span class="card-n">'+nf.format(g.n)+'</span><span class="card-p">'+pf(g.n/total*100)+' %</span></div><div class="card-meta">'+share+'<span><b>'+(g.k==="LED"?"—":kwf(g.kw))+'</b> kW</span></div>';
     cards.appendChild(el);
   });
-  
   const chips=document.getElementById("chips");chips.innerHTML="";
   gs.forEach(g=>{
     const b=document.createElement("button");b.className="chip";b.style.color=g.c;
@@ -233,7 +242,6 @@ function renderResumen(){
     b.onclick=()=>{active.has(g.k)?active.delete(g.k):active.add(g.k);if(!gs.some(x=>active.has(x.k)))gs.forEach(x=>active.add(x.k));renderResumen();};
     chips.appendChild(b);
   });
-  
   const tb=document.getElementById("tbody");tb.innerHTML="";
   const shown=gs.filter(g=>active.has(g.k)),max=Math.max(1,...shown.flatMap(g=>g.rows.map(r=>r.n)));
   shown.forEach(g=>{
@@ -284,7 +292,6 @@ function renderFaltantes(){
   ["Transversal","Columna","Otro"].forEach(so=>{if(so==="Otro"&&rowTot(so)===0)return;const tr=document.createElement("tr");tr.innerHTML='<td>'+so+'</td><td class="qty">'+nf.format(cont[so].Calle)+'</td><td class="qty">'+nf.format(cont[so]["Espacio Verde"])+'</td><td class="hide-sm muted">'+nf.format(cont[so].Otros)+'</td><td class="qty"><b>'+nf.format(rowTot(so))+'</b></td>';tb.appendChild(tr);});
 }
 
-/* ---------- PESTAÑA MAPA ---------- */
 function draw(){
   if(!ctx)return;
   const dpr=window.devicePixelRatio||1;ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -334,7 +341,6 @@ function renderSearch(){const host=document.getElementById("qres"),raw=query.tri
 
 function renderSide(){const host=document.getElementById("sideList");host.innerHTML="";if(sideTab==="bar"){const list=barrios.filter(b=>b.old>0).sort((a,b)=>b.old-a.old),tot=list.reduce((a,b)=>a+b.old,0),h=document.createElement("p");h.className="side-head";h.innerHTML='Todo el padrón · <b>'+nf.format(tot)+'</b> pendientes en '+list.length+' barrios';host.appendChild(h);list.forEach(B=>{const p=B.led/B.tot*100,b=document.createElement("button");b.className="st";b.innerHTML='<div class="st-h"><span class="st-n">'+B.nm+'</span><span class="st-q" style="color:#FFA94D">'+nf.format(B.old)+'</span></div><div class="st-bar"><i style="width:'+p+'%;background:#BFE3FF"></i><i style="width:'+(100-p)+'%;background:#FFA94D"></i></div><div class="st-meta"><span style="color:#BFE3FF">LED <b>'+nf.format(B.led)+'</b></span><span>'+pf1(p)+' % · '+nf.format(B.tot)+' total</span></div>';b.onclick=()=>{if(map&&map.fitBounds)map.fitBounds([[B.la0,B.lo0],[B.la1,B.lo1]],{maxZoom:17});};host.appendChild(b);});return;}const rows=clases.map((c,i)=>({c,n:vcls[i]||0,t:clsTec[i],w:clsW[i]})).filter(r=>r.n>0&&r.t!==0).sort((a,b)=>b.n-a.n);const led=clases.map((c,i)=>({c,n:vcls[i]||0,t:clsTec[i],w:clsW[i]})).filter(r=>r.n>0&&r.t===0).sort((a,b)=>b.n-a.n);const h=document.createElement("p");h.className="side-head";const tot=rows.reduce((a,b)=>a+b.n,0),kw=rows.reduce((a,b)=>a+b.n*b.w,0)/1000;h.innerHTML='En pantalla · <b>'+nf.format(tot)+'</b> equipos a reemplazar · <b>'+kwf(kw)+'</b> kW';host.appendChild(h);if(!rows.length){const e=document.createElement("p");e.className="empty";e.textContent="No hay tecnología anterior en este encuadre.";host.appendChild(e);return;}const max=rows[0].n;rows.forEach(r=>{const col=TECS[r.t].col,d=document.createElement("div");d.className="pot";d.style.color=col;d.innerHTML='<div class="pot-h"><span class="pot-n">'+r.c+'</span><span class="pot-q">'+nf.format(r.n)+'</span></div><div class="pot-bar"><i style="width:'+(r.n/max*100)+'%"></i></div><div class="pot-m"><span>'+(r.w?r.w+" W c/u":"—")+'</span><span>'+kwf(r.n*r.w/1000)+' kW</span></div>';host.appendChild(d);});}
 
-/* ---------- PESTAÑAS Y CONTROLES ---------- */
 function showTab(which){const esMapa=which==="mapa",esFalt=which==="faltantes";document.getElementById("panelResumen").hidden=esMapa||esFalt;document.getElementById("panelMapa").hidden=!esMapa;document.getElementById("panelFaltantes").hidden=!esFalt;document.getElementById("tabResumen").setAttribute("aria-selected",!esMapa&&!esFalt);document.getElementById("tabMapa").setAttribute("aria-selected",esMapa);document.getElementById("tabFaltantes").setAttribute("aria-selected",esFalt);if(esMapa){if(!mapReady){(typeof L!=="undefined")?initLeaflet():initFallback();renderLegend();renderSide();}else{if(map&&map.invalidateSize){map.invalidateSize();redraw();}else redraw();}}if(esFalt)renderFaltantes();}
 
 document.getElementById("tabResumen").onclick=()=>showTab("resumen");
@@ -349,8 +355,14 @@ document.getElementById("q").addEventListener("input",e=>{query=e.target.value;r
 function renderZonas(){const host=document.getElementById("zonas");host.innerHTML="";if(!zonas.length){host.style.display="none";return;}host.style.display="";const items=[{v:0,t:"Todas"},...zonas.map(z=>({v:z,t:"Zona "+z}))];items.forEach(it=>{const b=document.createElement("button");b.className="mode";b.setAttribute("aria-pressed",zonaSel===it.v);b.textContent=it.t;b.onclick=()=>{if(zonaSel===it.v)return;zonaSel=it.v;index();renderZonas();renderResumen();if(mapReady){renderLegend();renderSide();if(map&&map.fitBounds)map.fitBounds(limites());redraw();}};host.appendChild(b);});}
 
 document.getElementById("fsBtn").onclick=()=>{const box=document.querySelector(".maprow");if(document.fullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document);else(box.requestFullscreen||box.webkitRequestFullscreen||(()=>{})).call(box);};
-["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{const full=!!(document.fullscreenElement||document.webkitFullscreenElement);setTimeout(()=>{if(map&&map.invalidateSize)map.invalidateSize();redraw();},140);}));
+["fullscreenchange","webkitfullscreenchange"].forEach(ev=>document.addEventListener(ev,()=>{setTimeout(()=>{if(map&&map.invalidateSize)map.invalidateSize();redraw();},140);}));
 window.addEventListener("resize",()=>{if(mapReady&&map&&map.invalidateSize)map.invalidateSize();});
 
-/* ---------- ARRANQUE ---------- */
+document.querySelectorAll("#tipos .mode").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("#tipos .mode").forEach(x => x.setAttribute("aria-pressed", x === b));
+    cambiarTipo(b.dataset.tipo);
+  };
+});
+
 cargarDatos();
