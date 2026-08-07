@@ -373,8 +373,10 @@ function renderViewSummary(vt, vl, vo, vb) {
 }
 
 function initLeaflet() {
-    map = L.map("map", { preferCanvas: true, minZoom: 11, maxZoom: 19 }).fitBounds(limites());
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { subdomains: "abcd", maxZoom: 19, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
+    const oscuro = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { subdomains: "abcd", maxZoom: 19, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' });
+    const satelital = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { attribution: '&copy; Esri' });
+    map = L.map("map", { preferCanvas: true, minZoom: 11, maxZoom: 19, layers: [oscuro] }).fitBounds(limites());
+    L.control.layers({ "Oscuro": oscuro, "Satelital": satelital }, null, { position: 'topright' }).addTo(map);
     const Pts = L.Layer.extend({ onAdd(m) { canvas = L.DomUtil.create("canvas", "leaflet-zoom-hide"); canvas.style.position = "absolute"; m.getPanes().overlayPane.appendChild(canvas); ctx = canvas.getContext("2d"); const reset = () => { const size = m.getSize(), dpr = window.devicePixelRatio || 1; canvas.width = size.x * dpr; canvas.height = size.y * dpr; canvas.style.width = size.x + "px"; canvas.style.height = size.y + "px"; L.DomUtil.setPosition(canvas, m.containerPointToLayerPoint([0, 0])); draw(); }; m.on("moveend zoomend resize", reset); redraw = reset; reset(); } });
     proj = (la, lo) => { const p = map.latLngToContainerPoint([la, lo]); return [p.x, p.y]; }; map.addLayer(new Pts());
     map.on("click", ev => { const c = ev.containerPoint; let best = -1, bd = 196; for (let i = 0; i < N; i++) { if (PX[i] !== PX[i]) continue; const d = (PX[i] - c.x) * (PX[i] - c.x) + (PY[i] - c.y) * (PY[i] - c.y); if (d < bd) { bd = d; best = i; } } if (best < 0) return; const dir = calles[stx[best]] + (alt[best] ? " " + nf.format(alt[best]) : ""); L.popup().setLatLng([lat[best], lon[best]]).setContent('<b style="color:' + colorOf(best) + '">' + clases[cls[best]] + '</b><br>' + dir + '<br><span class="dim">' + (tec[best] ? "Tecnología anterior" : "LED") + ' · ' + tipos[tpo[best]] + '<br>' + barrios[bar[best]].nm + ' (aprox.) · alta ' + anios[yr[best]] + '</span>').openOn(map); });
