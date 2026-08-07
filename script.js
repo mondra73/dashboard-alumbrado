@@ -71,6 +71,11 @@ async function cargarDatos() {
         procesarJSON(json);
     } catch (e) {
         document.getElementById("src").textContent = "Error al cargar: " + e.message;
+    } finally {
+        // Asegurarse de que no quede "Cargando datos..."
+        if (document.getElementById("src").textContent === "Descargando datos...") {
+            document.getElementById("src").textContent = "";
+        }
     }
 }
 
@@ -121,6 +126,7 @@ function procesarJSON(json) {
 
 function cambiarTipo(tipo) {
     tipoSeleccionado = tipo;
+    document.getElementById("src").textContent = "Cargando...";
     fetch(DATA_URL)
         .then(r => r.arrayBuffer())
         .then(buffer => new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip")))
@@ -128,6 +134,9 @@ function cambiarTipo(tipo) {
         .then(texto => {
             procesarJSON(JSON.parse(texto));
             if (mapReady) { renderLegend(); renderSide(); renderSearch(); redraw(); }
+        })
+        .catch(e => {
+            document.getElementById("src").textContent = "Error al cargar: " + e.message;
         });
 }
 

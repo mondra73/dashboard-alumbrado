@@ -1,176 +1,240 @@
 <!DOCTYPE html>
 <html lang="es-AR">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard Parque Lumínico · Alumbrado Público</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <link rel="stylesheet" href="estilo.css">
 </head>
+
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <div class="logo"><img id="logo-mr" alt="Municipalidad de Rosario"></div>
-      <div>
-        <p class="eyebrow">Alumbrado Público · Ambiente y Espacio Público</p>
-        <h1><em>Dashboard</em> Parque Lumínico</h1>
-      </div>
-    </div>
-    <div class="top-right">
-      <div class="src" id="src">Cargando datos...</div>
-          <div class="top-right">
-      <div class="src" id="src">Cargando datos...</div>
-      <!-- AGREGAR ESTO -->
-      <div class="modes" id="tipos" role="group" aria-label="Tipo de equipamiento" style="margin-top:0">
-        <button class="mode" data-tipo="todas" aria-pressed="false">Todas</button>
-        <button class="mode" data-tipo="Lámpara" aria-pressed="true">Lámparas</button>
-        <button class="mode" data-tipo="Columna" aria-pressed="false">Columnas</button>
-        <button class="mode" data-tipo="Transversal" aria-pressed="false">Transversales</button>
-        <button class="mode" data-tipo="Tablero" aria-pressed="false">Tableros</button>
-      </div>
-      <!-- FIN AGREGAR -->
-    </div>
-    </div>
-  </header>
+    <div class="wrap">
+        <header class="top">
+            <div class="brand">
+                <div class="logo"><img id="logo-mr" alt="Municipalidad de Rosario"></div>
+                <div>
+                    <p class="eyebrow">Alumbrado Público · Ambiente y Espacio Público</p>
+                    <h1><em>Dashboard</em> Parque Lumínico</h1>
+                </div>
+            </div>
+            <div class="top-right">
+                <div class="src" id="src">Cargando datos...</div>
+                <div class="modes" id="tipos" role="group" aria-label="Tipo de equipamiento" style="margin-top:0">
+                    <button class="mode" data-tipo="todas" aria-pressed="false">Todas</button>
+                    <button class="mode" data-tipo="Lámpara" aria-pressed="true">Lámparas</button>
+                    <button class="mode" data-tipo="Columna" aria-pressed="false">Columnas</button>
+                    <button class="mode" data-tipo="Transversal" aria-pressed="false">Transversales</button>
+                    <button class="mode" data-tipo="Tablero" aria-pressed="false">Tableros</button>
+                </div>
+            </div>
+        </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" id="tabResumen" role="tab" aria-selected="true" aria-controls="panelResumen">Resumen</button>
-    <button class="tab" id="tabMapa" role="tab" aria-selected="false" aria-controls="panelMapa" title="Ver el mapa">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
-        <circle cx="12" cy="12" r="9.2"></circle><ellipse cx="12" cy="12" rx="4" ry="9.2"></ellipse>
-        <path d="M2.9 9.2h18.2M2.9 14.8h18.2"></path>
-      </svg>
-      Mapa
-    </button>
-    <button class="tab" id="tabFaltantes" role="tab" aria-selected="false" aria-controls="panelFaltantes">Pendientes según montaje</button>
-  </div>
-
-  <div class="ctlrow">
-    <div class="modes" role="group" aria-label="Vista">
-      <button class="mode" data-mode="bin" aria-pressed="true">LED vs. anteriores</button>
-      <button class="mode" data-mode="tec" aria-pressed="false">Cada tecnología</button>
-    </div>
-    <div class="modes" id="zonas" role="group" aria-label="Zona"></div>
-  </div>
-
-  <!-- PESTAÑA RESUMEN -->
-  <section class="panel-tab" id="panelResumen" role="tabpanel" aria-labelledby="tabResumen">
-    <section class="hero">
-      <div>
-        <div class="total-num" id="total">0</div>
-        <div class="total-lbl">Lámparas en servicio</div>
-        <div class="total-sub" id="totalSub">—</div>
-      </div>
-      <div id="bars"></div>
-    </section>
-    <p class="cards-title" id="cardsTitle"></p>
-    <section class="cards" id="cards"></section>
-    <div class="controls">
-      <h2>Detalle por clasificación y potencia</h2>
-      <div class="opts">
-        <label class="switch">
-          <input type="checkbox" id="mhx">
-          <span class="track"></span>
-          Sumar Mercurio Halogenado a Mercurio
-        </label>
-        <div class="chips" id="chips"></div>
-      </div>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Clasificación</th><th class="hide-sm">Potencia / Lúmenes</th><th>Cantidad</th><th>% del total</th><th class="hide-md">% del grupo</th><th class="pct-cell">Participación</th></tr></thead>
-        <tbody id="tbody"></tbody>
-        <tfoot><tr id="tfoot"></tr></tfoot>
-      </table>
-    </div>
-    <div class="controls">
-      <h2>Dónde están montadas</h2>
-      <span class="muted" style="font-size:12.5px">Soporte y ámbito de cada lámpara</span>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Soporte y ámbito</th><th>Cantidad</th><th>% del total</th><th>LED</th><th>Anteriores</th><th class="pct-cell">Avance</th></tr></thead>
-        <tbody id="mBody"></tbody>
-        <tfoot><tr id="mFoot"></tr></tfoot>
-      </table>
-    </div>
-    <div id="calidad"></div>
-  </section>
-
-  <!-- PESTAÑA MAPA -->
-  <section class="panel-tab" id="panelMapa" role="tabpanel" aria-labelledby="tabMapa" hidden>
-    <div class="maprow">
-      <div class="wrapmap">
-        <div id="map"></div>
-        <button class="mapbtn" id="fsBtn" title="Pantalla completa" aria-label="Pantalla completa">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" id="fsIcon">
-            <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"></path>
-          </svg>
-        </button>
-        <div class="fslegend" id="fsLegend"></div>
-        <div class="notice" id="notice"></div>
-      </div>
-      <aside class="side">
-        <div class="block"><p class="block-t">Capas · clic para mostrar u ocultar</p><div id="legend"></div></div>
-        <div class="block"><p class="block-t">Buscar dirección</p><input class="search" id="q" type="search" placeholder="Ej.: Mendoza 3400" autocomplete="off"><div id="qres"></div></div>
-        <div class="block" style="border-bottom:none;padding-bottom:0">
-          <div class="sortrow" role="group" aria-label="Contenido de la lista">
-            <button class="sortb" data-side="bar" aria-pressed="true">Barrios pendientes</button>
-            <button class="sortb" data-side="pot" aria-pressed="false">Potencias a comprar</button>
-          </div>
+        <div class="tabs" role="tablist">
+            <button class="tab" id="tabResumen" role="tab" aria-selected="true"
+                aria-controls="panelResumen">Resumen</button>
+            <button class="tab" id="tabMapa" role="tab" aria-selected="false" aria-controls="panelMapa"
+                title="Ver el mapa">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                    <circle cx="12" cy="12" r="9.2"></circle>
+                    <ellipse cx="12" cy="12" rx="4" ry="9.2"></ellipse>
+                    <path d="M2.9 9.2h18.2M2.9 14.8h18.2"></path>
+                </svg>
+                Mapa
+            </button>
+            <button class="tab" id="tabFaltantes" role="tab" aria-selected="false"
+                aria-controls="panelFaltantes">Pendientes
+                según montaje</button>
         </div>
-        <div class="streets" id="sideList"></div>
-      </aside>
-    </div>
-    <div class="viewsum">
-      <div class="vs-head">
-        <h2 class="vs-title">Lo que estás viendo en el mapa</h2>
-        <div class="vs-stats">
-          <div class="vs-stat"><b id="vTot">—</b>Lámparas</div>
-          <div class="vs-stat" style="color:var(--led)"><b id="vLed">—</b>LED</div>
-          <div class="vs-stat" style="color:var(--old)"><b id="vOld">—</b>Anteriores</div>
-          <div class="vs-stat"><b id="vBar">—</b>Barrios con pendientes</div>
+
+        <div class="ctlrow">
+            <div class="modes" role="group" aria-label="Vista">
+                <button class="mode" data-mode="bin" aria-pressed="true">LED vs. anteriores</button>
+                <button class="mode" data-mode="tec" aria-pressed="false">Cada tecnología</button>
+            </div>
+            <div class="modes" id="zonas" role="group" aria-label="Zona"></div>
         </div>
-      </div>
-      <p class="vs-note"><b>Barrio aproximado.</b> El padrón no trae el campo barrio: cada lámpara se asigna al centro de barrio más cercano, así que los límites son orientativos y conviene validarlos con el SIG municipal.</p>
-      <div class="tbl-wrap" style="border:none;border-radius:0">
-        <table>
-          <thead><tr><th>Barrio (aprox.)</th><th>Sodio</th><th class="hide-sm">Merc. hal.</th><th class="hide-sm">Mercurio</th><th class="hide-sm">Otras</th><th>Anteriores</th><th class="hide-md">LED</th><th class="pct-cell">Avance</th></tr></thead>
-          <tbody id="bBody"></tbody>
-          <tfoot><tr id="bFoot"></tr></tfoot>
-        </table>
-      </div>
-    </div>
-  </section>
 
-  <!-- PESTAÑA FALTANTES -->
-  <section class="panel-tab" id="panelFaltantes" role="tabpanel" aria-labelledby="tabFaltantes" hidden>
-    <div class="controls">
-      <h2>Pendientes según montaje</h2>
-      <span class="muted" style="font-size:12.5px">Solo tecnología anterior (pendiente de recambio a LED) · <b id="fTotal">0</b> lámparas en total</span>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Soporte</th><th>Calle</th><th>Espacio Verde</th><th class="hide-sm">Otros ámbitos</th><th>Total</th></tr></thead>
-        <tbody id="fBody"></tbody>
-        <tfoot><tr id="fFoot"></tr></tfoot>
-      </table>
-    </div>
-  </section>
+        <!-- PESTAÑA RESUMEN -->
+        <section class="panel-tab" id="panelResumen" role="tabpanel" aria-labelledby="tabResumen">
+            <section class="hero">
+                <div>
+                    <div class="total-num" id="total">0</div>
+                    <div class="total-lbl">Lámparas en servicio</div>
+                    <div class="total-sub" id="totalSub">—</div>
+                </div>
+                <div id="bars"></div>
+            </section>
+            <p class="cards-title" id="cardsTitle"></p>
+            <section class="cards" id="cards"></section>
+            <div class="controls">
+                <h2>Detalle por clasificación y potencia</h2>
+                <div class="opts">
+                    <label class="switch">
+                        <input type="checkbox" id="mhx">
+                        <span class="track"></span>
+                        Sumar Mercurio Halogenado a Mercurio
+                    </label>
+                    <div class="chips" id="chips"></div>
+                </div>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Clasificación</th>
+                            <th class="hide-sm">Potencia / Lúmenes</th>
+                            <th>Cantidad</th>
+                            <th>% del total</th>
+                            <th class="hide-md">% del grupo</th>
+                            <th class="pct-cell">Participación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                    <tfoot>
+                        <tr id="tfoot"></tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="controls">
+                <h2>Dónde están montadas</h2>
+                <span class="muted" style="font-size:12.5px">Soporte y ámbito de cada lámpara</span>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Soporte y ámbito</th>
+                            <th>Cantidad</th>
+                            <th>% del total</th>
+                            <th>LED</th>
+                            <th>Anteriores</th>
+                            <th class="pct-cell">Avance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mBody"></tbody>
+                    <tfoot>
+                        <tr id="mFoot"></tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div id="calidad"></div>
+        </section>
 
-  <footer style="margin-top:26px;font-size:12px;color:var(--ink-3);line-height:1.7">
-    <b>Actualización automática.</b> Los datos se descargan todos los días a las 5 AM desde GESU y se publican en este dashboard.<br>
-    <b>Mapa base.</b> OpenStreetMap · CARTO, requiere conexión a internet.<br>
-    <b>Coordenadas.</b> Convertidas desde Gauss-Krüger faja 5 (POSGAR) a latitud/longitud.
-  </footer>
-</div>
+        <!-- PESTAÑA MAPA -->
+        <section class="panel-tab" id="panelMapa" role="tabpanel" aria-labelledby="tabMapa" hidden>
+            <div class="maprow">
+                <div class="wrapmap">
+                    <div id="map"></div>
+                    <button class="mapbtn" id="fsBtn" title="Pantalla completa" aria-label="Pantalla completa">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                            stroke-linecap="round" stroke-linejoin="round" id="fsIcon">
+                            <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"></path>
+                        </svg>
+                    </button>
+                    <div class="fslegend" id="fsLegend"></div>
+                    <div class="notice" id="notice"></div>
+                </div>
+                <aside class="side">
+                    <div class="block">
+                        <p class="block-t">Capas · clic para mostrar u ocultar</p>
+                        <div id="legend"></div>
+                    </div>
+                    <div class="block">
+                        <p class="block-t">Buscar dirección</p><input class="search" id="q" type="search"
+                            placeholder="Ej.: Mendoza 3400" autocomplete="off">
+                        <div id="qres"></div>
+                    </div>
+                    <div class="block" style="border-bottom:none;padding-bottom:0">
+                        <div class="sortrow" role="group" aria-label="Contenido de la lista">
+                            <button class="sortb" data-side="bar" aria-pressed="true">Barrios pendientes</button>
+                            <button class="sortb" data-side="pot" aria-pressed="false">Potencias a comprar</button>
+                        </div>
+                    </div>
+                    <div class="streets" id="sideList"></div>
+                </aside>
+            </div>
+            <div class="viewsum">
+                <div class="vs-head">
+                    <h2 class="vs-title">Lo que estás viendo en el mapa</h2>
+                    <div class="vs-stats">
+                        <div class="vs-stat"><b id="vTot">—</b>Lámparas</div>
+                        <div class="vs-stat" style="color:var(--led)"><b id="vLed">—</b>LED</div>
+                        <div class="vs-stat" style="color:var(--old)"><b id="vOld">—</b>Anteriores</div>
+                        <div class="vs-stat"><b id="vBar">—</b>Barrios con pendientes</div>
+                    </div>
+                </div>
+                <p class="vs-note"><b>Barrio aproximado.</b> El padrón no trae el campo barrio: cada lámpara se asigna
+                    al
+                    centro de barrio más cercano, así que los límites son orientativos y conviene validarlos con el SIG
+                    municipal.</p>
+                <div class="tbl-wrap" style="border:none;border-radius:0">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Barrio (aprox.)</th>
+                                <th>Sodio</th>
+                                <th class="hide-sm">Merc. hal.</th>
+                                <th class="hide-sm">Mercurio</th>
+                                <th class="hide-sm">Otras</th>
+                                <th>Anteriores</th>
+                                <th class="hide-md">LED</th>
+                                <th class="pct-cell">Avance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bBody"></tbody>
+                        <tfoot>
+                            <tr id="bFoot"></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<script src="logo.js"></script> 
-<script src="script.js"></script>
+        <!-- PESTAÑA FALTANTES -->
+        <section class="panel-tab" id="panelFaltantes" role="tabpanel" aria-labelledby="tabFaltantes" hidden>
+            <div class="controls">
+                <h2>Pendientes según montaje</h2>
+                <span class="muted" style="font-size:12.5px">Solo tecnología anterior (pendiente de recambio a LED) · <b
+                        id="fTotal">0</b> lámparas en total</span>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Soporte</th>
+                            <th>Calle</th>
+                            <th>Espacio Verde</th>
+                            <th class="hide-sm">Otros ámbitos</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fBody"></tbody>
+                    <tfoot>
+                        <tr id="fFoot"></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <footer style="margin-top:26px;font-size:12px;color:var(--ink-3);line-height:1.7">
+            <b>Actualización automática.</b> Los datos se descargan todos los días a las 5 AM desde GESU y se publican
+            en
+            este dashboard.<br>
+            <b>Mapa base.</b> OpenStreetMap · CARTO, requiere conexión a internet.<br>
+            <b>Coordenadas.</b> Convertidas desde Gauss-Krüger faja 5 (POSGAR) a latitud/longitud.
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="logo.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>
