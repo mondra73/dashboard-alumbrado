@@ -346,7 +346,7 @@ function draw() {
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const W = canvas.width / dpr, H = canvas.height / dpr; ctx.clearRect(0, 0, W, H);
-    const r = map && map.getZoom ? Math.max(1.2, 6 - (map.getZoom() - 11) * 0.7) : 3;
+    const r = 4.5;
     const list = mode === "bin" ? BINS : TECS;
     const vb = barrios.map(() => [0, 0, 0, 0, 0]); vcls = new Array(clases.length).fill(0); const vtec = [0, 0, 0, 0, 0]; let vt = 0, vl = 0, vo = 0;
     for (let i = 0; i < N; i++) {
