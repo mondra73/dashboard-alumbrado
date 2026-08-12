@@ -41,6 +41,13 @@ const BINS = [
     { k: 0, label: "LED", col: "#BFE3FF" }, { k: 1, label: "Tecnología anterior", col: "#FFA94D" }
 ];
 
+const MATS_COLUMNA = {
+    "Acero": "#BFE3FF",
+    "Hormigón": "#34D399",
+    "Madera": "#FFC168",
+    "default": "#9AA8B8"
+};
+
 let N = 0, NZ = 0, lat, lon, cls, stx, alt, tec, bar, tpo, yr, zon, PX, PY;
 let zonas = [], zonaSel = 0;
 let clases = [], calles = [], tipos = [], anios = [];
@@ -237,11 +244,12 @@ function renderResumen() {
     const gs = groups(), total = data.reduce((a, b) => a + b.n, 0), bin = binGroups();
     const esLampara = tipoSeleccionado === "Lámpara";
     const esTodas = tipoSeleccionado === "todas";
+    const esColumna = tipoSeleccionado === "Columna";
     const ledG = bin.find(g => g.k === "LED") || { n: 0, kw: 0 }, oldG = bin.find(g => g.k === "OLD") || { n: 0, kw: 0, rows: [] };
     const oldDetail = build(oldKeys(), r => (joinMhx && r.tec === 2) ? "MER" : keyOf(r.tec));
     document.getElementById("total").textContent = nf.format(total);
     document.getElementById("totalSub").textContent = esLampara ? "Recambio a LED " + pf(ledG.n / total * 100) + " % · faltan " + nf.format(oldG.n) : "";
-    document.getElementById("bars").parentElement.style.display = (esLampara || esTodas) ? "" : "none";
+    document.getElementById("bars").parentElement.style.display = (esLampara || esTodas || esColumna) ? "" : "none";
     document.getElementById("cardsTitle").style.display = esLampara ? "" : "none";
     document.getElementById("cards").style.display = esLampara ? "" : "none";
     document.querySelector(".controls").style.display = esLampara ? "" : "none";
@@ -267,6 +275,14 @@ function renderResumen() {
         ].filter(t => t.n > 0);
 
         drawBar(bars, tiposData, total, "tall", true, "Composición por tipo de equipamiento", nf.format(total) + " registros = 100 %");
+    } else if (esColumna) {
+        // Barra de materiales para columnas
+        const matData = data.map(d => {
+            const mat = d.clase || "";
+            const color = MATS_COLUMNA[mat] || MATS_COLUMNA["default"];
+            return { label: mat, n: d.n, c: color };
+        }).filter(d => d.n > 0).sort((a, b) => b.n - a.n);
+        drawBar(bars, matData, total, "tall", true, "Composición por material", nf.format(total) + " columnas = 100 %");
     } else if (esLampara) {
         if (mode === "bin") {
             drawBar(bars, bin, total, "tall", true, "LED frente a tecnologías anteriores", nf.format(total) + " unidades = 100 %");
@@ -354,7 +370,35 @@ function draw() {
         const p = proj(lat[i], lon[i]); if (p[0] < -20 || p[0] > W + 20 || p[1] < -20 || p[1] > H + 20) { PX[i] = NaN; continue; }
         PX[i] = p[0]; PY[i] = p[1]; vt++; tec[i] ? vo++ : vl++; vb[bar[i]][tec[i]]++; vcls[cls[i]]++; vtec[tec[i]]++;
     }
-    for (let g = list.length - 1; g >= 0; g--) { ctx.fillStyle = list[g].col; ctx.globalAlpha = .88; ctx.beginPath(); for (let i = 0; i < N; i++) { if (PX[i] !== PX[i] || grp(i) !== list[g].k) continue; ctx.moveTo(PX[i] + r, PY[i]); ctx.arc(PX[i], PY[i], r, 0, 6.2832); } ctx.fill(); }
+    if (tipoSeleccionado === "Columna") {
+        // Dibujar punto por punto con color según material
+        const mats = Object.keys(MATS_COLUMNA);
+        for (let m = mats.length - 1; m >= 0; m--) {
+            const mat = mats[m];
+            if (mat === "default") continue;
+            ctx.fillStyle = MATS_COLUMNA[mat];
+            ctx.globalAlpha = .88;
+            ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                if (PX[i] !== PX[i]) continue;
+                const claseMat = clases[cls[i]] || "";
+                if (claseMat !== mat) continue;
+                ctx.moveTo(PX[i] + r, PY[i]);
+                ctx.arc(PX[i], PY[i], r, 0, 6.2832);
+            }
+            ctx.fill();
+        }
+    } else {
+        for (let g = list.length - 1; g >= 0; g--) {
+            ctx.fillStyle = list[g].col; ctx.globalAlpha = .88; ctx.beginPath();
+            for (let i = 0; i < N; i++) {
+                if (PX[i] !== PX[i] || grp(i) !== list[g].k) continue;
+                ctx.moveTo(PX[i] + r, PY[i]);
+                ctx.arc(PX[i], PY[i], r, 0, 6.2832);
+            }
+            ctx.fill();
+        }
+    }
     ctx.globalAlpha = 1;
     renderViewSummary(vt, vl, vo, vb); renderFsLegend(vtec, vt); if (sideTab === "pot") renderSide();
 }
@@ -362,7 +406,15 @@ function draw() {
 function renderViewSummary(vt, vl, vo, vb) {
     document.getElementById("vTot").textContent = nf.format(vt);
     document.querySelector(".vs-stat").childNodes[1].textContent = tipoSeleccionado === "todas" ? "Registros" : tipoSeleccionado + "s";
-    document.getElementById("vLed").textContent = nf.format(vl); document.getElementById("vOld").textContent = nf.format(vo);
+    if (tipoSeleccionado === "Columna") {
+        document.querySelector(".vs-stat:nth-child(2)").style.display = "none";
+        document.querySelector(".vs-stat:nth-child(3)").style.display = "none";
+    } else {
+        document.querySelector(".vs-stat:nth-child(2)").style.display = "";
+        document.querySelector(".vs-stat:nth-child(3)").style.display = "";
+        document.getElementById("vLed").textContent = nf.format(vl);
+        document.getElementById("vOld").textContent = nf.format(vo);
+    }
     const rows = barrios.map((B, i) => { const v = vb[i]; return { nm: B.nm, i, led: v[0], sod: v[1], mhx: v[2], mer: v[3], otr: v[4], old: v[1] + v[2] + v[3] + v[4], top: B.top }; }).filter(r => r.old > 0).sort((a, b) => b.old - a.old);
     document.getElementById("vBar").textContent = nf.format(rows.length);
     const tb = document.getElementById("bBody"); tb.innerHTML = "";
@@ -390,7 +442,7 @@ function initFallback() { const nt = document.getElementById("notice"); nt.style
 
 function renderFsLegend(vtec, vt) { const host = document.getElementById("fsLegend"); if (!host) return; const list = mode === "bin" ? BINS : TECS; host.innerHTML = ""; list.forEach(l => { const n = mode === "bin" ? (l.k === 0 ? vtec[0] : vtec[1] + vtec[2] + vtec[3] + vtec[4]) : vtec[l.k], isOn = mode === "bin" ? (l.k === 0 ? on[0] : on.slice(1).some(Boolean)) : on[l.k], b = document.createElement("button"); b.className = "fsl"; b.style.color = l.col; b.setAttribute("aria-pressed", isOn); b.title = "Mostrar u ocultar " + l.label; b.innerHTML = '<i class="dot"></i>' + l.label + ' <b>' + nf.format(n) + '</b>'; b.onclick = () => { if (mode === "bin") { if (l.k === 0) on[0] = !on[0]; else { const v = !on.slice(1).some(Boolean); on[1] = on[2] = on[3] = on[4] = v; } } else on[l.k] = !on[l.k]; if (!on.some(Boolean)) on = [true, true, true, true, true]; renderLegend(); redraw(); }; host.appendChild(b); }); const sep = document.createElement("i"); sep.className = "fsl-sep"; host.appendChild(sep); const tot = document.createElement("span"); tot.className = "fsl-tot"; tot.innerHTML = 'En pantalla <b>' + nf.format(vt) + '</b>'; host.appendChild(tot); }
 
-function renderLegend() {
+function renderLegend() { 
     if (tipoSeleccionado !== "Lámpara" && tipoSeleccionado !== "todas") {
         document.getElementById("legend").innerHTML = "";
         return;
@@ -406,13 +458,33 @@ function renderSearch() {
 
 function renderSide() {
     const host = document.getElementById("sideList"); host.innerHTML = "";
-    if (tipoSeleccionado !== "Lámpara" && tipoSeleccionado !== "todas") {
+        if (tipoSeleccionado !== "Lámpara" && tipoSeleccionado !== "todas") {
         const h = document.createElement("p");
         h.className = "side-head";
         h.innerHTML = 'Total en pantalla · <b>' + nf.format(NZ) + '</b> ' + tipoSeleccionado.toLowerCase() + 's';
+        host.appendChild(h);
+        
+        // Si es columna, mostrar leyenda de materiales
+        if (tipoSeleccionado === "Columna") {
+            const matCounts = {};
+            for (let i = 0; i < N; i++) {
+                if (!inZ(i)) continue;
+                const mat = clases[cls[i]] || "Otro";
+                matCounts[mat] = (matCounts[mat] || 0) + 1;
+            }
+            const sorted = Object.entries(matCounts).sort((a, b) => b[1] - a[1]);
+            sorted.forEach(([mat, n]) => {
+                const color = MATS_COLUMNA[mat] || MATS_COLUMNA["default"];
+                const b = document.createElement("button");
+                b.className = "leg";
+                b.style.color = color;
+                b.innerHTML = '<i class="dot"></i><span class="nm">' + mat + '</span><span class="qt">' + nf.format(n) + '</span>';
+                host.appendChild(b);
+            });
+        }
+        
         document.getElementById("legend").innerHTML = "";
         document.querySelector(".side .block:first-child").style.display = "none";
-        host.appendChild(h);
         return;
     }
     if (sideTab === "bar") { const list = barrios.filter(b => b.old > 0).sort((a, b) => b.old - a.old), tot = list.reduce((a, b) => a + b.old, 0), h = document.createElement("p"); h.className = "side-head"; h.innerHTML = 'Todo el padrón · <b>' + nf.format(tot) + '</b> pendientes en ' + list.length + ' barrios'; host.appendChild(h); list.forEach(B => { const p = B.led / B.tot * 100, b = document.createElement("button"); b.className = "st"; b.innerHTML = '<div class="st-h"><span class="st-n">' + B.nm + '</span><span class="st-q" style="color:#FFA94D">' + nf.format(B.old) + '</span></div><div class="st-bar"><i style="width:' + p + '%;background:#BFE3FF"></i><i style="width:' + (100 - p) + '%;background:#FFA94D"></i></div><div class="st-meta"><span style="color:#BFE3FF">LED <b>' + nf.format(B.led) + '</b></span><span>' + pf1(p) + ' % · ' + nf.format(B.tot) + ' total</span></div>'; b.onclick = () => { if (map && map.fitBounds) map.fitBounds([[B.la0, B.lo0], [B.la1, B.lo1]], { maxZoom: 17 }); }; host.appendChild(b); }); return; } const rows = clases.map((c, i) => ({ c, n: vcls[i] || 0, t: clsTec[i], w: clsW[i] })).filter(r => r.n > 0 && r.t !== 0).sort((a, b) => b.n - a.n); const led = clases.map((c, i) => ({ c, n: vcls[i] || 0, t: clsTec[i], w: clsW[i] })).filter(r => r.n > 0 && r.t === 0).sort((a, b) => b.n - a.n); const h = document.createElement("p"); h.className = "side-head"; const tot = rows.reduce((a, b) => a + b.n, 0), kw = rows.reduce((a, b) => a + b.n * b.w, 0) / 1000; h.innerHTML = 'En pantalla · <b>' + nf.format(tot) + '</b> equipos a reemplazar · <b>' + kwf(kw) + '</b> kW'; host.appendChild(h); if (!rows.length) { const e = document.createElement("p"); e.className = "empty"; e.textContent = "No hay tecnología anterior en este encuadre."; host.appendChild(e); return; } const max = rows[0].n; rows.forEach(r => { const col = TECS[r.t].col, d = document.createElement("div"); d.className = "pot"; d.style.color = col; d.innerHTML = '<div class="pot-h"><span class="pot-n">' + r.c + '</span><span class="pot-q">' + nf.format(r.n) + '</span></div><div class="pot-bar"><i style="width:' + (r.n / max * 100) + '%"></i></div><div class="pot-m"><span>' + (r.w ? r.w + " W c/u" : "—") + '</span><span>' + kwf(r.n * r.w / 1000) + ' kW</span></div>'; host.appendChild(d); });
