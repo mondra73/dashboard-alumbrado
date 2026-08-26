@@ -425,7 +425,7 @@ function renderViewSummary(vt, vl, vo, vb) {
 }
 
 function initLeaflet() {
-    const oscuro = L.tileLayer("https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_263y_1_d98117a39ab7a17a64f7a428", { maxZoom: 19, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' });
+    const oscuro = L.tileLayer("https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_263y_1_d98117a39ab7a17a64f7a428", { maxZoom: 19, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' });
     const satelital = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { attribution: '&copy; Esri' });
     map = L.map("map", { preferCanvas: true, minZoom: 11, maxZoom: 19, layers: [oscuro] }).fitBounds(limites());
     L.control.layers({ "Oscuro": oscuro, "Satelital": satelital }, null, { position: 'topright' }).addTo(map);
