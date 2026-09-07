@@ -426,9 +426,10 @@ function renderViewSummary(vt, vl, vo, vb) {
 
 function initLeaflet() {
     const oscuro = L.tileLayer("https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_263y_1_d98117a39ab7a17a64f7a428", { maxZoom: 19, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' });
+    const blanco = L.tileLayer("https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_263y_1_d98117a39ab7a17a64f7a428", { maxZoom: 19, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' });
     const satelital = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { attribution: '&copy; Esri' });
     map = L.map("map", { preferCanvas: true, minZoom: 11, maxZoom: 19, layers: [oscuro] }).fitBounds(limites());
-    L.control.layers({ "Oscuro": oscuro, "Satelital": satelital }, null, { position: 'topright' }).addTo(map);
+    L.control.layers({ "Oscuro": oscuro, "Blanco": blanco, "Satelital": satelital }, null, { position: 'topright' }).addTo(map);
     const Pts = L.Layer.extend({ onAdd(m) { canvas = L.DomUtil.create("canvas", "leaflet-zoom-hide"); canvas.style.position = "absolute"; m.getPanes().overlayPane.appendChild(canvas); ctx = canvas.getContext("2d"); const reset = () => { const size = m.getSize(), dpr = window.devicePixelRatio || 1; canvas.width = size.x * dpr; canvas.height = size.y * dpr; canvas.style.width = size.x + "px"; canvas.style.height = size.y + "px"; L.DomUtil.setPosition(canvas, m.containerPointToLayerPoint([0, 0])); draw(); }; m.on("moveend zoomend resize", reset); redraw = reset; reset(); } });
     proj = (la, lo) => { const p = map.latLngToContainerPoint([la, lo]); return [p.x, p.y]; }; map.addLayer(new Pts());
     canvas.style.cursor = "pointer";
