@@ -25,15 +25,24 @@
                 </div>
             </div>
             <div class="top-right">
-                <div class="src" id="src">Cargando datos...</div>
-                <div class="modes" id="tipos" role="group" aria-label="Tipo de equipamiento" style="margin-top:0">
-                    <button class="mode" data-tipo="todas" aria-pressed="false">Todas</button>
-                    <button class="mode" data-tipo="Lámpara" aria-pressed="true">Lámparas</button>
-                    <button class="mode" data-tipo="Columna" aria-pressed="false">Columnas</button>
-                    <button class="mode" data-tipo="Transversal" aria-pressed="false">Transversales</button>
-                    <button class="mode" data-tipo="Tablero" aria-pressed="false">Tableros</button>
-                </div>
-            </div>
+                <div class="top-right">
+                    <label class="switch theme-switch" title="Cambiar tema claro/oscuro">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="track"></span>
+                        <span style="font-size:11px; color:var(--ink-3)">Tema claro</span>
+                    </label>
+                    <div class="src" id="src">Cargando datos...</div>
+                    <div class="modes" id="tipos" role="group" aria-label="Tipo de equipamiento" style="margin-top:0">
+                        <div class="src" id="src">Cargando datos...</div>
+                        <div class="modes" id="tipos" role="group" aria-label="Tipo de equipamiento"
+                            style="margin-top:0">
+                            <button class="mode" data-tipo="todas" aria-pressed="false">Todas</button>
+                            <button class="mode" data-tipo="Lámpara" aria-pressed="true">Lámparas</button>
+                            <button class="mode" data-tipo="Columna" aria-pressed="false">Columnas</button>
+                            <button class="mode" data-tipo="Transversal" aria-pressed="false">Transversales</button>
+                            <button class="mode" data-tipo="Tablero" aria-pressed="false">Tableros</button>
+                        </div>
+                    </div>
         </header>
 
         <div class="tabs" role="tablist">

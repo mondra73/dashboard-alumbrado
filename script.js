@@ -520,4 +520,21 @@ document.querySelectorAll("#tipos .mode").forEach(b => {
     };
 });
 
+// Toggle de tema claro/oscuro
+document.getElementById("themeToggle").addEventListener("change", e => {
+    if (e.target.checked) {
+        document.body.classList.add("tema-claro");
+    } else {
+        document.body.classList.remove("tema-claro");
+    }
+    // Guardar preferencia
+    localStorage.setItem("tema", e.target.checked ? "claro" : "oscuro");
+});
+
+// Cargar tema guardado
+if (localStorage.getItem("tema") === "claro") {
+    document.body.classList.add("tema-claro");
+    document.getElementById("themeToggle").checked = true;
+}
+
 cargarDatos();

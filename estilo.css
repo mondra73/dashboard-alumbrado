@@ -243,3 +243,25 @@ tfoot td{background:var(--panel-2);border-top:1px solid var(--line);color:#fff;f
     .tall .seg-txt { font-size: 9px; left: 6px; top: 6px; }
     .tall .seg-pct { font-size: 16px; left: 6px; bottom: 8px; }
 }
+
+/* Tema claro */
+body.tema-claro {
+    --night:#f5f7fa; --panel:#ffffff; --panel-2:#f0f2f5;
+    --line:#d1d5db; --line-soft:#e5e7eb;
+    --ink:#1a1a1a; --ink-2:#4a5568; --ink-3:#6b7280;
+    background:#ffffff;
+}
+body.tema-claro .logo{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+body.tema-claro .total-num{color:#1a1a1a; text-shadow:none}
+body.tema-claro .card-n{color:#1a1a1a}
+body.tema-claro .card-p{color:inherit}
+body.tema-claro tbody tr:hover td{background:#f5f7fa}
+body.tema-claro tr.head-row td{background:#e8ecef}
+body.tema-claro tr.head-row:hover td{background:#e8ecef}
+body.tema-claro .vs-note{background:#f5f7fa}
+body.tema-claro .leaflet-popup-content-wrapper,
+body.tema-claro .leaflet-popup-tip{background:#ffffff; color:#1a1a1a}
+body.tema-claro .leaflet-control-zoom a{background:#ffffff!important; color:#4a5568!important}
+body.tema-claro .fslegend{background:rgba(255,255,255,.9)}
+body.tema-claro .search{background:#ffffff; border-color:#d1d5db; color:#1a1a1a}
+body.tema-claro .search::placeholder{color:#6b7280}
